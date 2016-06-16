@@ -33,12 +33,14 @@ get_EBS_List() {
         echo "The selection method \"volumeid\" (which is $app_name's default selection_method of operation or requested by using the -s volumeid parameter) requires a volumeid (-v volumeid) for operation. Correct usage is as follows: \"-v vol-6d6a0527\",\"-s volumeid -v vol-6d6a0527\" or \"-v \"vol-6d6a0527 vol-636a0112\"\" if multiple volumes are to be selected." 1>&2 ; exit 64
       fi
       ebs_selection_string="--volume-ids $volumeid"
+      tag_name="Name,Value=$volumeid"
       ;;
     tag)
       if [[ -z $tag ]]; then
         echo "The selected selection_method \"tag\" (-s tag) requires a valid tag (-t Backup,Values=true) for operation. Correct usage is as follows: \"-s tag -t Backup,Values=true.\"" 1>&2 ; exit 64
       fi
       ebs_selection_string="--filters Name=tag:$tag"
+      tag_name=`echo $tag | sed 's/Values/Value/g'`
       ;;
     *) echo "If you specify a selection_method (-s selection_method) for selecting EBS volumes you must select either \"volumeid\" (-s volumeid) or \"tag\" (-s tag)." 1>&2 ; exit 64 ;;
   esac
@@ -68,7 +70,7 @@ create_EBS_Snapshot_Tags() {
   fi
   #if $user_tags is true, then append Volume=$ebs_selected and Created=$current_date to the variable $snapshot_tags
   if $user_tags; then
-    snapshot_tags="$snapshot_tags Key=Name,Value=${tag}_daily_$current_date Key=Volume,Value=${ebs_selected} Key=Created,Value=$current_date"
+    snapshot_tags="$snapshot_tags Key=${tag_name}_daily_$current_date Key=Volume,Value=${ebs_selected} Key=Created,Value=$current_date"
   fi
   #if $snapshot_tags is not zero length then set the tag on the snapshot using aws ec2 create-tags
   if [[ -n $snapshot_tags ]]; then
